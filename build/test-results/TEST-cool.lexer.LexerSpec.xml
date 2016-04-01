@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="cool.lexer.LexerSpec" tests="1" skipped="0" failures="0" errors="0" timestamp="2016-04-01T00:51:21" hostname="helton" time="0.609">
+  <properties/>
+  <testcase name="it should recognize multiple tokens" classname="cool.lexer.LexerSpec" time="0.609"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
