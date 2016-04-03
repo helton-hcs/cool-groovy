@@ -1,31 +1,47 @@
 package cool.lexer
 
+import cool.exceptions.SyntaxError
+
 import java.util.regex.Pattern
 
 enum TokenType {
-    //order is important to try to find the longest match (example: <inherits> should come before <in>)
+    //order is important to try to find the longest match (using regex boundaries to handle that)
     BLANK(pattern:/^[\t\s\n]+/, skip:true),
-    COMMENT(pattern:/^\(\*(.*?)\*\)/, skip:true),
+    SINGLE_LINE_COMMENT(pattern:/^\-\-(.*?)(\n|$)/, skip:true),
+    MULTI_LINE_COMMENT(pattern:/^\(\*(.|\n)*?\*\)/, skip:true, patternClosure:{ //the patternClosure avoid StackOverflow produced by complex regexes
+        String content, int index ->
+            int id = index
+            if ((content[id..-1].size() > 1) && (content[id..(id+1)] == '(*')) {
+                id += 2
+                while ((content[id..-1].size() > 1) && (content[id..(id+1)] != '*)'))
+                    id++
+                if ((content[id..-1].size() > 1) && (content[id..(id+1)] == '*)')) //in case of unbalanced multiline comment
+                    id += 2
+                else
+                    throw new SyntaxError("Unbalanced multiline comment")
+                return content[index..id]
+            }
+    }),
 
-    CASE(lexeme:'case'),
-    CLASS(lexeme:'class'),
-    ELSE(lexeme:'else'),
-    ESAC(lexeme:'esac'),
-    FALSE(lexeme:'false'),
-    FI(lexeme:'fi'),
-    IF(lexeme:'if'),
-    INHERITS(lexeme:'inherits'),
-    IN(lexeme:'in'),
-    ISVOID(lexeme:'isvoid'),
-    LET(lexeme:'let'),
-    LOOP(lexeme:'loop'),
-    NEW(lexeme:'new'),
-    NOT(lexeme:'not'),
-    OF(lexeme:'of'),
-    POOL(lexeme:'pool'),
-    THEN(lexeme:'then'),
-    TRUE(lexeme:'true'),
-    WHILE(lexeme:'while'),
+    CASE(lexeme:'case', keyword:true),
+    CLASS(lexeme:'class', keyword:true),
+    ELSE(lexeme:'else', keyword:true),
+    ESAC(lexeme:'esac', keyword:true),
+    FALSE(lexeme:'false', keyword:true),
+    FI(lexeme:'fi', keyword:true),
+    IF(lexeme:'if', keyword:true),
+    IN(lexeme:'in', keyword:true),
+    INHERITS(lexeme:'inherits', keyword:true),
+    ISVOID(lexeme:'isvoid', keyword:true),
+    LET(lexeme:'let', keyword:true),
+    LOOP(lexeme:'loop', keyword:true),
+    NEW(lexeme:'new', keyword:true),
+    NOT(lexeme:'not', keyword:true),
+    OF(lexeme:'of', keyword:true),
+    POOL(lexeme:'pool', keyword:true),
+    THEN(lexeme:'then', keyword:true),
+    TRUE(lexeme:'true', keyword:true),
+    WHILE(lexeme:'while', keyword:true),
 
     ASSIGN(lexeme:'<-'),
     LEQ(lexeme:'<='),
@@ -45,19 +61,26 @@ enum TokenType {
     SEMICOLON(lexeme:';'),
     COMMA(lexeme:','),
     COLON(lexeme:':'),
+    DOT(lexeme:'.'),
 
-    INTEGER(pattern:/^[1-9][0-9]*/),
+    INTEGER(pattern:/^(0|([1-9][0-9]*))/),
     ID(pattern:/^[A-Za-z_][A-Za-z0-9_]*/),
     STRING(pattern:/^\"(\\.|[^"])*\"/)
 
     String lexeme
     String pattern
     boolean skip = false
+    boolean keyword = false
+    Closure patternClosure
 
     def getPattern() {
         if (pattern)
             pattern
-        else
-            /^${Pattern.quote(lexeme)}/
+        else {
+            if (keyword)
+                /^\b${Pattern.quote(lexeme)}\b/
+            else
+                /^${Pattern.quote(lexeme)}/
+        }
     }
 }

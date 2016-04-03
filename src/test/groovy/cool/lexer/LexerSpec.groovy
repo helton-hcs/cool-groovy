@@ -1,5 +1,6 @@
 package cool.lexer
 
+import cool.exceptions.SyntaxError
 import spock.lang.Specification
 
 class LexerSpec extends Specification {
@@ -13,7 +14,7 @@ class LexerSpec extends Specification {
         tokens == []
     }
 
-    def "it should recognize a CLASS keyword"() {
+    def "it should recognize a keyword"() {
         when:
         def tokens = lexer.tokenize("class")
 
@@ -87,20 +88,68 @@ class LexerSpec extends Specification {
         when:
         def tokens = lexer.tokenize("""
 
-class""")
+class
+
+""")
 
         then:
         tokens.size() == 1
         tokens.first() == new Token(type:TokenType.CLASS, position:new Position(3, 1))
     }
 
-    def "it should ignore comments"() {
+    def "it should ignore single line comments"() {
         when:
-        def tokens = lexer.tokenize("(* test 123 *) class Foo { } (* another test 456 *)")
+        def tokens = lexer.tokenize("class Foo { } --This is my class")
 
         then:
         tokens.size() == 4
         tokens.collect { it.type } == [TokenType.CLASS, TokenType.ID, TokenType.LEFT_BRACE, TokenType.RIGHT_BRACE]
+    }
+
+    def "it should ignore multiline comments on a single lines"() {
+        when:
+        def tokens = lexer.tokenize("""
+            (* test 123 *)
+            class Foo {
+            }
+            (* another test 456 *)
+        """)
+
+        then:
+        tokens.size() == 4
+        tokens.collect { it.type } == [TokenType.CLASS, TokenType.ID, TokenType.LEFT_BRACE, TokenType.RIGHT_BRACE]
+    }
+
+    def "it should ignore multiline comments"() {
+        when:
+        def tokens = lexer.tokenize("""
+            (*
+             * test 123
+             * test 456
+             *)
+            class Foo {
+            }
+            (* another
+             * test
+             * 456
+             *)
+        """)
+
+        then:
+        tokens.size() == 4
+        tokens.collect { it.type } == [TokenType.CLASS, TokenType.ID, TokenType.LEFT_BRACE, TokenType.RIGHT_BRACE]
+    }
+
+    def "it should thrown an exception with unbalanced multiline comments"() {
+        when:
+        lexer.tokenize("""
+            (*
+             * test 123
+             * test 456
+        """)
+
+        then:
+        thrown(SyntaxError)
     }
 
 }

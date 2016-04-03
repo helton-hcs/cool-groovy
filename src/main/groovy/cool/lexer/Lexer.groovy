@@ -1,14 +1,20 @@
 package cool.lexer
 
+import cool.exceptions.SyntaxError
+
 class Lexer {
 
-    def tokenize(String source) {
+    def static tokenize(String source) {
         Reader reader = new Reader(content:source)
         def tokens = []
 
         while (!reader.isDone()) {
+            Match match = null
             for (TokenType type in TokenType.values()) {
-                Match match = reader.match(type.pattern)
+                if (type.patternClosure)
+                    match = reader.matchWith(type.patternClosure)
+                else
+                    match = reader.match(type.pattern)
                 if (match) {
                     if (!type.skip) {
                         Token token = new Token(type, new Position(match.row, match.column))
@@ -19,6 +25,8 @@ class Lexer {
                     break;
                 }
             }
+            if (!match && !reader.isDone()) //if it didn't match any text and it still have text available to parse
+                throw new SyntaxError("No match found. Remaining text = <${reader.remainingText}>")
         }
 
         tokens

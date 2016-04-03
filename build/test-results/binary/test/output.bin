@@ -1,0 +1,8 @@
+here!
+:cool.lexer.Token(CLASS, cool.lexer.Position(1, 1), class)
+here!
+5cool.lexer.Token(ID, cool.lexer.Position(1, 7), Foo)
+here!
+<cool.lexer.Token(LEFT_BRACE, cool.lexer.Position(1, 11), {)
+here!
+=cool.lexer.Token(RIGHT_BRACE, cool.lexer.Position(1, 13), })
